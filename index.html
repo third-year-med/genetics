@@ -7390,6 +7390,7 @@ const PracticalBank = {
     if (this.test) return this.renderTest(page);
     if (this.detailId) { const it = State.practical.find(x => x.id === this.detailId); if (it) return this.renderDetail(page, it); this.detailId = null; }
     const teacher = Auth.isTeacher();
+    if (!teacher && !(State.practical || []).length) { Router.go('practical', [], { replace: true }); return; }   // empty Image Bank: students go to the Practicals
     page.appendChild(sectionTitleBlock('🖼 Practical — Image Bank', 'Essential gross, microscopic and clinical images selected by your teacher. Open an item, study it, then reveal the diagnosis — or test yourself in Image-ID mode.',
       el('div', { class: 'row' },
         el('button', { class: 'btn', disabled: !State.practical.some(p => (p.images || []).length), onclick: () => this.startTest() }, '🧪 Test Yourself (Image ID Mode)'),
@@ -9198,7 +9199,7 @@ function pracTabs(active) {
   const t = Auth.isTeacher(); const drafts = t ? PracData.drafts.length : 0;
   return el('div', { class: 'tabs prac-tabs' },
     el('button', { class: 'tab' + (active === 'list' ? ' active' : ''), onclick: () => Router.go('practical') }, '📋 Practicals', t && drafts ? el('span', { class: 'nb' }, String(drafts)) : null),
-    el('button', { class: 'tab' + (active === 'bank' ? ' active' : ''), onclick: () => Router.go('practical', ['bank']) }, '🖼 Image Bank'),
+    t || (State.practical || []).length ? el('button', { class: 'tab' + (active === 'bank' ? ' active' : ''), onclick: () => Router.go('practical', ['bank']) }, '🖼 Image Bank') : null,   // hidden from students while empty
     t ? el('button', { class: 'tab' + (active === 'handbook' ? ' active' : ''), onclick: () => Router.go('practical', ['handbook']) }, '📚 Handbook') : null,
     t ? el('button', { class: 'tab' + (active === 'settings' ? ' active' : ''), onclick: () => Router.go('practical', ['settings']) }, '⚙ Settings') : null);
 }
@@ -9261,7 +9262,7 @@ const PracStudent = {
     page.appendChild(head);
     if (!pubs.length) {
       page.appendChild(el('div', { class: 'card empty mt1' }, el('span', { class: 'big' }, '🔬'), el('h3', { style: 'margin:.3rem 0' }, 'No practicals published yet'),
-        el('p', { class: 'muted' }, teacher ? 'Create practicals from your practical PDF, review them, add the real images and publish — they appear here for students.' : 'Your teacher has not published any practicals yet. The Image Bank tab may already have images to study.')));
+        el('p', { class: 'muted' }, teacher ? 'Create practicals from your practical PDF, review them, add the real images and publish — they appear here for students.' : 'Your teacher has not published any practicals yet.' + ((State.practical || []).length ? ' The Image Bank tab may already have images to study.' : ''))));
       return;
     }
     const grid = el('div', { class: 'prac-list' });
