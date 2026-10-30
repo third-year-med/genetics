@@ -183,6 +183,12 @@ main#app-main{flex:1 0 auto;width:100%}
 .exam-qs{margin-top:1rem;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:.8rem 1rem}
 .exam-qs summary{cursor:pointer;font-weight:700;color:var(--navy-2)}
 .exam-qs ol{margin:.5rem 0 0;padding-left:1.3rem;color:var(--ink-2)}
+.prac-guide{margin-top:1rem;background:var(--teal-soft);border:1px solid #b8e4de;border-radius:var(--radius);padding:.8rem 1rem}
+.prac-guide summary{cursor:pointer;font-weight:700;color:var(--teal-ink)}
+.prac-guide p{margin:.5rem 0 0;color:var(--ink-2)}
+.prac-guide ol{margin:.5rem 0 0;padding-left:1.3rem;color:var(--ink-2)}
+.prac-guide li{margin:.25rem 0}
+.prac-guide .row{margin-top:.6rem;flex-wrap:wrap}
 .section-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-top:.9rem;overflow:hidden;transition:box-shadow .2s,border-color .2s}
 .section-card.open{border-color:#bcd4e6;box-shadow:0 6px 24px rgba(11,42,74,.10)}
 .section-card.flash{animation:flash 1.6s ease}
@@ -1122,6 +1128,26 @@ body.pres-fs-on{overflow:hidden}
 .rs-menu-pop{position:absolute;right:0;top:calc(100% + 4px);z-index:30;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-lg);padding:.3rem;display:flex;flex-direction:column;min-width:240px}
 .rs-menu-pop .btn{justify-content:flex-start;text-align:left;width:100%}
 .rs-sticky{position:fixed;left:50%;transform:translate(-50%,-120%);z-index:45;display:flex;gap:.6rem;align-items:center;background:#fff;border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;box-shadow:var(--shadow);padding:.4rem .9rem;max-width:min(760px,calc(100vw - 24px));white-space:nowrap;overflow:hidden;transition:transform .18s;pointer-events:none}
+.rsr{position:fixed;inset:0;z-index:9500;background:var(--bg);display:flex;flex-direction:column;--rsr-fs:1.35rem}
+.rsr-bar{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.6rem 1rem;background:var(--navy);color:#fff}
+.rsr-bar .btn{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25)}
+.rsr-bar .rsr-pos{font-weight:700;margin-right:auto}
+.rsr-main{flex:1;overflow:auto;padding:1.4rem clamp(1rem,5vw,4rem);font-size:var(--rsr-fs);line-height:1.5;color:var(--ink)}
+.rsr-meta{font-size:.7em;color:var(--muted);margin-bottom:.4rem}
+.rsr-stem{font-weight:700;margin:.4rem 0 .9rem}
+.rsr-case{background:var(--info-soft);border-left:4px solid var(--info);padding:.6rem .9rem;border-radius:8px;margin-bottom:.6rem}
+.rsr-opt{display:grid;grid-template-columns:2.2em 1fr auto;gap:.6rem;align-items:center;padding:.45rem .7rem;margin:.35rem 0;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.rsr-opt .l{font-weight:800;color:var(--navy-2)}
+.rsr-opt .n{font-size:.75em;color:var(--muted);white-space:nowrap}
+.rsr-opt .bar{grid-column:2/4;height:.55em;background:var(--line-2);border-radius:99px;overflow:hidden}
+.rsr-opt .bar span{display:block;height:100%;background:var(--faint)}
+.rsr-opt.ok{border-color:var(--ok);background:var(--ok-soft)}
+.rsr-opt.ok .bar span{background:var(--ok)}
+.rsr-key{margin-top:.9rem;padding:.7rem .9rem;border-radius:10px;background:var(--ok-soft);border:1px solid var(--ok)}
+.rsr-exp{margin-top:.6rem;font-size:.85em}
+.rsr-pct{font-size:.8em;margin-top:.6rem}
+@media print{.rsr{display:none}}
+body.learn-fs .rs-sticky{display:none!important}
 .rs-sticky.show{transform:translate(-50%,0);pointer-events:auto}.rs-sticky b{overflow:hidden;text-overflow:ellipsis;color:var(--navy)}
 .rs-kpis{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.6rem;margin:.9rem 0}
 .rs-kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:.7rem .8rem;box-shadow:var(--shadow)}
@@ -3008,7 +3034,9 @@ const ABANK = {
   }
 };
 /** What a picked topic quiz says about its questions. */
-function tqDescription(TQ, x) { return TQ.n + ' random questions from the ' + x.pool.length + (x.src === 'bank' ? ' 🔒 assessment-bank questions of this topic (never shown in Practice)' : ' practice questions of this topic') + ' · ' + TQ.min + ' minutes.'; }
+function tqDescription(TQ, x) { return TQ.n + ' random questions from the ' + x.pool.length + (x.src === 'bank' ? ' 🔒 assessment-bank questions of this topic (never shown in Practice)' : x.src === 'mix' ? ' questions of this topic (' + x.nb + ' 🔒 assessment-bank + ' + x.np + ' practice)' : ' practice questions of this topic') + ' · ' + TQ.min + ' minutes.'; }
+/** ⚡ Topic quizzes source (patch tq-mix): 'mix' (default) | 'bank' (bank first) | 'practice'. */
+function tqSource() { const v = Store.get('tq_source_v1', 'mix'); return v === 'bank' || v === 'practice' ? v : 'mix'; }
 function rebuildQuestions() {
   QUESTIONS = DATA.questions.concat(State.importedQuestions.map(q => Object.assign({}, q, { imported: true })));
   if (window.UE_Q) QUESTIONS = window.UE_Q(QUESTIONS); // teacher edits (universal editor)
@@ -5283,6 +5311,7 @@ Views.explain = {
         el('button', { class: 'btn btn-sm', onclick: () => this.printTopic(t) }, '🖨 Print'),
         el('button', { class: 'btn btn-sm lfs-btn', 'data-a': 'learn-fs', title: 'Read this topic full screen (Esc to leave)', onclick: () => LearnFS.toggle() }, LearnFS.on ? '✕ Exit full screen' : '⛶ Full screen'),
         el('button', { class: 'btn btn-sm btn-primary print-chapter-btn', title: 'Print or save as PDF every topic of this chapter', onclick: () => this.printChapter() }, '🖨️ Print Entire Chapter'))));
+    if (pracGuideTopic() === t) main.appendChild(pracGuideCard('learn'));
     if (t.syllabusQuestions && t.syllabusQuestions.length) {
       main.appendChild(el('details', { class: 'exam-qs' },
         el('summary', null, '🎯 Exam-style questions for this topic (from the syllabus)'),
@@ -7633,13 +7662,13 @@ const PE_MOTIFS = {
 const PE_DIAGRAM_KINDS = { histo: 'Histological schematic', flow: 'Flowchart / process', concept: 'Key-features concept map' };
 const PE_DEFAULT_SETTINGS = {
   allowPrint: true, allowPdf: true, includeImages: true, includeDiagrams: true, includeQuestions: true, includeViva: true,
-  includeTeachingPoints: true, includeAnswers: false, showAnswersOnline: false, allowAnswerKey: false, answerSpace: false, fileName: ''
+  includeTeachingPoints: true, includeAnswers: true, showAnswersOnline: true, allowAnswerKey: true, answerSpace: false, fileName: ''   // all on (patch prac-defaults-on)
 };
 const PE_MANDATORY_CHOICES = { title: 'Title', number: 'Practical number', objectives: 'Learning objectives', specimen: 'Specimen / material', gross: 'Gross description', microscopic: 'Microscopic description', keyFeatures: 'Key microscopic features', diagnosis: 'Diagnosis', questions: 'Practical questions' };
 const PE_DEFAULT_CFG = {
   institution: '', department: 'Department of Pathology', courseName: '', academicYear: '',
   watermarkEnabled: false, watermarkText: '', footerEnabled: true, footerText: '',
-  allowSetDownload: false, allowSetPrint: false, showAIDisclosure: false,
+  allowSetDownload: true, allowSetPrint: true, showAIDisclosure: false,   // students may download / print the Complete Practical Set (patch prac-defaults-on)
   mandatory: ['title', 'number', 'microscopic', 'keyFeatures', 'diagnosis'],
   defaults: Object.assign({}, PE_DEFAULT_SETTINGS), aiModel: 'claude-sonnet-5'
 };
@@ -9246,6 +9275,33 @@ const PracHandout = {
    published practicals (study page, self-answering, print / PDF handouts).
    The existing Image Bank lives on as a second sub-tab (PracticalBank).
    ========================================================================== */
+/* 🧭 Practical study guide (2026-10-24): how the practical Learn topic and Apply → Practical work together.
+   Shown on that topic in Learn ('learn') and on Apply → Practical → Practicals ('practical'). */
+function pracGuideTopic() { return getTopics().find(t => /practical/i.test(t.title || '')) || null; }
+function pracGuideCard(where) {
+  const t = pracGuideTopic(); const inLearn = where === 'learn';
+  const tName = t ? '“' + t.title + '”' : 'the practical topic';
+  const quiz = t ? el('button', { class: 'btn btn-sm', onclick: () => Router.go('revision', ['topic', t.id]) }, '🧠 Topic quiz') : null;
+  const d = el('details', { class: 'prac-guide', 'data-a': 'prac-guide', open: Store.get('prac_guide_open_v1', true) !== false },
+    el('summary', null, '🧭 How to use the practical — before, during and after the session'),
+    el('p', null, inLearn ? 'This topic gives you the knowledge; Apply → Practical trains you to recognise the specimens in gross and microscopic pictures. Use them together:'
+      : 'The practical trains you to recognise the specimens in gross and microscopic pictures; ' + tName + ' in Learn gives you the knowledge. Use them together:'),
+    el('ol', null,
+      el('li', null, el('b', null, 'Before the session — '), inLearn ? 'read this topic (what to look for, gross and microscopic features, the key clue) and do its quiz.'
+        : 'read ' + tName + ' in Learn (what to look for, gross and microscopic features, the key clue) and do its quiz.'),
+      el('li', null, el('b', null, 'During the session — '), 'open the session’s practical in Apply → Practical: describe each gross and microscopic picture on the handout before you name it.'),
+      el('li', null, el('b', null, 'After the session — '), 'practise in the 🔬 Pathology Spotter (Practice mode): look at each picture, choose the best answer, then read the explanation.' + ((State.practical || []).length ? ' The Image Bank lets you name the pictures freely.' : '')),
+      el('li', null, el('b', null, 'Before the exam — '), 'take a Spotter exam (Exam mode: 20 pictures, score and review at the end), then ' + (inLearn ? 'revise this topic’s key points' : 'revise the topic’s key points') + ' for the questions you missed.')),
+    el('p', { class: 'small muted' }, 'The specimens have the same names and diagnoses in both places.'),
+    el('div', { class: 'row' },
+      inLearn ? el('button', { class: 'btn btn-sm btn-primary', onclick: () => Router.go('practical') }, '🔬 Open the Practicals')
+        : t ? el('button', { class: 'btn btn-sm btn-primary', onclick: () => Router.go('explain', [t.id]) }, '📖 Read the topic in Learn') : null,
+      el('button', { class: 'btn btn-sm', 'data-a': 'prac-guide-spotter', onclick: () => Router.go('study', ['challenge']) }, '🔬 Pathology Spotter'),
+      quiz,
+      (State.practical || []).length || Auth.isTeacher() ? el('button', { class: 'btn btn-sm', onclick: () => Router.go('practical', ['bank']) }, '🖼 Image Bank') : null));
+  d.addEventListener('toggle', () => Store.set('prac_guide_open_v1', d.open));
+  return d;
+}
 function pracTabs(active) {
   const t = Auth.isTeacher(); const drafts = t ? PracData.drafts.length : 0;
   return el('div', { class: 'tabs prac-tabs' },
@@ -9304,6 +9360,7 @@ const PracStudent = {
         el('button', { class: 'btn btn-primary', onclick: () => Router.go('practical', ['import']) }, '✨ Create from PDF'),
         el('button', { class: 'btn', onclick: () => PracTeacher.newBlank() }, '+ Blank practical')) : null));
     page.appendChild(pracTabs('list'));
+    page.appendChild(pracGuideCard('practical'));
     if (teacher) page.appendChild(PracTeacher.draftsPanel());
     const setPdf = teacher || cfg.allowSetDownload, setPrint = teacher || cfg.allowSetPrint;
     const head = el('div', { class: 'row between mt2' }, el('h2', { class: 'prac-h2' }, teacher ? '👩‍🎓 Published — what students see' : 'Your practicals'),
@@ -10602,6 +10659,10 @@ Views.attendance = {
     const course = el('input', { type: 'text', value: last.course || 'Pathology' });
     const chapter = el('input', { type: 'text', value: last.chapter || COURSE.title });
     const teacher = el('input', { type: 'text', value: last.teacher || AUTHOR });
+    // the account that opened the module (Portal.gs 2.35 teacherWho): a personal teacher sees their own name, never the author's
+    if (!this.whoP) this.whoP = Backend.authedPost({ action: 'teacherWho' }, { timeout: 20000 }).catch(() => null);
+    teacher.addEventListener('input', () => { teacher.dataset.typed = '1'; });
+    this.whoP.then(r => { if (r && r.ok && !r.admin && r.name && !teacher.dataset.typed) teacher.value = r.name; });
     const title = el('input', { type: 'text', placeholder: 'e.g. Session 2 — Chromosomal disorders' });
     const msg = el('div');
     return el('div', { class: 'card' }, el('h3', null, '▶ Start attendance for a new teaching session'),
@@ -12994,7 +13055,7 @@ Views.teacher = {
     this.loadingResults = false;
     if (ra && ra.ok) attempts = ra.attempts.filter(t => t.status === 'submitted').map(t => ({
       id: t.id, name: t.name, email: t.email, score: t.score, total: t.total, percent: t.percent, correct: t.correct, incorrect: t.incorrect, unanswered: t.unanswered,
-      startedAt: new Date(t.startedAt).toISOString(), submittedAt: new Date(t.submittedAt).toISOString(), durationSec: Math.round((t.submittedAt - t.startedAt) / 1000),
+      startedAt: rsIso(t.startedAt), submittedAt: rsIso(t.submittedAt), durationSec: Math.max(0, Math.round((t.submittedAt - t.startedAt) / 1000) || 0),
       answers: t.answers || [], snapshot: t.questions || [], optionOrders: t.optionOrders || [], assessmentId: t.assessmentId, assessmentTitle: (getAssessment(t.assessmentId) || {}).title || t.assessmentTitle,
       assessmentVersion: t.version, assignmentId: t.assignmentId, attemptNo: t.attemptNo, late: !!t.late, passed: t.settings && t.settings.passPct ? t.percent >= t.settings.passPct : undefined,
       settings: t.settings || {}, feedback: t.feedback || null,
@@ -13564,6 +13625,8 @@ function showQuestionVersions(q) {
    runs on this device and feedback is handed to the teacher's email app.
    ========================================================================== */
 const RS_ALL = '__all', RS_LEGACY = '__legacy';
+/** A safe ISO time for Results (patch rs-safe-dates): an invalid or missing time never stops the page. */
+function rsIso(v) { const d = new Date(v); return isNaN(d.getTime()) ? new Date(0).toISOString() : d.toISOString(); }
 const RS_LEGACY_TITLE = 'Formal Quiz (before assessments)';
 
 const ResultsUI = {
@@ -13674,6 +13737,9 @@ const ResultsUI = {
     const sticky = el('div', { class: 'rs-sticky', role: 'status', 'aria-live': 'off' }, el('span', { class: 'rs-kicker' }, 'Assessment'), el('b', null, inf.title), el('span', { class: 'small muted' }, meta.slice(0, 2).join(' · ')),
       el('button', { class: 'btn btn-xs', onclick: () => { bar.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => sel.focus(), 350); } }, 'Change'));
     document.body.appendChild(sticky);
+    // leaving Results (another view or portal tab) removes the bar — it never stays on top of Learn / ⛶ Full screen (2026-10-26)
+    const rsLeave = () => setTimeout(() => { if (Router.current === 'teacher' && this.T().tab === 'results' && sticky.isConnected) return; sticky.remove(); window.removeEventListener('hashchange', rsLeave); if (this._io) { this._io.disconnect(); this._io = null; } }, 0);
+    window.addEventListener('hashchange', rsLeave);
     const hdr = document.querySelector('.app-header'); const top = hdr ? hdr.offsetHeight : 0; sticky.style.top = top + 'px';
     if (this._io) this._io.disconnect();
     if ('IntersectionObserver' in window) {
@@ -13742,7 +13808,8 @@ const ResultsUI = {
     const need = rows.filter(s => s.p < 100);
     const shown = this.showAllQ ? rows : need.slice(0, 8);
     const card = el('section', { class: 'card rs-card mt1', id: 'rs-missed' }, el('div', { class: 'row between' }, el('h3', { style: 'margin:0' }, 'Most-missed questions', this.topic ? el('span', { class: 'badge teal', style: 'margin-left:.5rem' }, topicTitle(this.topic)) : null),
-      el('span', { class: 'small muted' }, need.length + ' of ' + rows.length + ' questions below 100% correct')));
+      el('div', { class: 'row', style: 'gap:.6rem;align-items:center' }, el('span', { class: 'small muted' }, need.length + ' of ' + rows.length + ' questions below 100% correct'),
+        rows.length ? el('button', { class: 'btn btn-sm btn-primary', 'data-a': 'rs-review', title: 'Go through these questions with the class, full screen, hardest first', onclick: () => this.reviewInClass(rows) }, '🎞️ Review in class') : null)));
     if (!rows.length) { card.appendChild(el('p', { class: 'small muted' }, 'No questions for this topic.')); return card; }
     if (!shown.length) card.appendChild(el('p', { class: 'small muted' }, 'No questions needing review — every question was answered correctly by everyone.'));
     card.appendChild(el('div', { class: 'rs-qs' }, shown.map((s, i) => el('button', { class: 'rs-q', onclick: () => this.showQuestion(s) },
@@ -13751,6 +13818,60 @@ const ResultsUI = {
       el('span', { class: 'rs-qp' }, el('b', { class: s.p < 50 ? 'lo' : s.p < 75 ? 'mid' : 'hi' }, s.p + '% correct'), el('span', { class: 'small muted' }, plural(s.n, 'response')))))));
     if (rows.length > shown.length || this.showAllQ) card.appendChild(el('button', { class: 'btn btn-sm btn-ghost mt1', onclick: () => { this.showAllQ = !this.showAllQ; this.render(this.box); } }, this.showAllQ ? 'Show fewer' : 'Show all ' + rows.length + ' questions'));
     return card;
+  },
+  /** 🎞️ Review in class (patch rs-review): the tested questions full screen, answer hidden until Reveal. */
+  reviewInClass(rows) {
+    if (!rows || !rows.length) return;
+    document.querySelectorAll('.rsr').forEach(n => n.remove());
+    let i = 0, shown = false, fs = (() => { try { return parseFloat(localStorage.getItem('rsr_fs')) || 1.35; } catch (e) { return 1.35; } })();
+    const main = el('div', { class: 'rsr-main', 'aria-live': 'polite' });
+    const pos = el('span', { class: 'rsr-pos' });
+    const prev = el('button', { class: 'btn btn-sm', 'aria-label': 'Previous question', onclick: () => go(i - 1) }, '◀');
+    const next = el('button', { class: 'btn btn-sm', 'aria-label': 'Next question', onclick: () => go(i + 1) }, '▶');
+    const rev = el('button', { class: 'btn btn-sm', 'data-a': 'rsr-reveal', onclick: () => { shown = !shown; paint(); } });
+    const size = d => { fs = Math.min(2.4, Math.max(.9, Math.round((fs + d) * 100) / 100)); root.style.setProperty('--rsr-fs', fs + 'rem'); try { localStorage.setItem('rsr_fs', String(fs)); } catch (e) { /* private mode */ } };
+    const root = el('div', { class: 'rsr', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Review in class' },
+      el('div', { class: 'rsr-bar' }, pos, prev, rev, next,
+        el('button', { class: 'btn btn-sm', 'aria-label': 'Smaller text', onclick: () => size(-.15) }, 'A−'),
+        el('button', { class: 'btn btn-sm', 'aria-label': 'Larger text', onclick: () => size(.15) }, 'A+'),
+        el('button', { class: 'btn btn-sm', 'data-a': 'rsr-close', 'aria-label': 'Close the review', onclick: () => close() }, '✕')), main);
+    root.style.setProperty('--rsr-fs', fs + 'rem');
+    const close = () => { root.remove(); document.removeEventListener('keydown', onKey, true); };
+    const onKey = (e) => {
+      if (e.target && e.target.closest && e.target.closest('input,textarea,select')) return;
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+      else if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); go(i + 1); }
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(i - 1); }
+      else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); shown = !shown; paint(); }
+    };
+    const go = (k) => { if (k < 0 || k >= rows.length) return; i = k; shown = false; paint(); main.scrollTop = 0; };
+    const paint = () => {
+      const s = rows[i], q = s.q; clear(main);
+      pos.textContent = 'Question ' + (i + 1) + ' of ' + rows.length; prev.disabled = i === 0; next.disabled = i === rows.length - 1;
+      rev.textContent = shown ? '🙈 Hide answer' : '👁 Reveal answer';
+      main.appendChild(el('div', { class: 'rsr-meta' }, (TYPE_LABELS[q.type] || q.type) + (topicNum(s.topic) ? ' · Topic ' + topicNum(s.topic) + ' — ' + topicTitle(s.topic) : '')));
+      if (q.case) main.appendChild(el('div', { class: 'rsr-case' }, el('b', null, '🩺 Case: '), q.case));
+      main.appendChild(el('div', { class: 'rsr-stem' }, q.stem));
+      const opt = (label, txt, n, ok) => el('div', { class: 'rsr-opt' + (shown && ok ? ' ok' : '') }, el('span', { class: 'l' }, label), el('span', null, txt),
+        shown ? el('span', { class: 'n' }, (ok ? '✓ ' : '') + n + ' (' + pct(n, s.n) + '%)') : el('span'),
+        shown ? el('div', { class: 'bar' }, el('span', { style: { width: Math.max(1, pct(n, s.n)) + '%' } })) : null);
+      if (['mcq', 'vignette', 'selectall'].includes(q.type)) {
+        const key = q.type === 'selectall' ? (q.answers || []) : [q.answer];
+        (q.options || []).forEach((o, k) => main.appendChild(opt(LETTERS[k], o, s.resp.filter(x => q.type === 'selectall' ? Array.isArray(x.r) && x.r.includes(k) : x.r === k).length, key.includes(k))));
+      } else if (q.type === 'tf') {
+        main.appendChild(opt('T', 'True', s.resp.filter(x => x.r === true).length, q.answer === true));
+        main.appendChild(opt('F', 'False', s.resp.filter(x => x.r === false).length, q.answer === false));
+      } else if (shown) {
+        main.appendChild(opt('✓', 'Fully correct', s.c, true)); main.appendChild(opt('½', 'Partly correct', s.partial || 0, false));
+        main.appendChild(opt('✗', 'Incorrect', s.n - s.c - (s.partial || 0) - s.blank, false));
+      }
+      if (!shown) return;
+      main.appendChild(el('div', { class: 'rsr-pct' }, el('b', null, s.p + '% correct'), ' · ' + plural(s.n, 'response') + (s.blank ? ' · ' + s.blank + ' not answered' : '')));
+      main.appendChild(el('div', { class: 'rsr-key' }, el('b', null, 'Correct answer: '), correctAnswerText(q)));
+      if (q.explanation) main.appendChild(el('div', { class: 'rsr-exp' }, el('b', null, 'Explanation: '), q.explanation));
+    };
+    document.body.appendChild(root); document.addEventListener('keydown', onKey, true);
+    paint(); rev.focus();
   },
   showQuestion(s) {
     const q = s.q; const body = el('div', { class: 'stack' });
@@ -14687,9 +14808,11 @@ const AssessUI = {
     const rev = new Set(State.revExcludeIds || []);
     return { TQ, topics: getTopics().map((t, i) => {
       const prac = QUESTIONS.filter(q => q.topic === t.id && q.type !== 'short' && !rev.has(q.id)).map(q => q.id);
-      const bank = ABANK.forTopic(t.id), pool = bank.length >= TQ.n ? bank : prac;   // 🔒 the assessment bank first (≥ 5 questions), else practice
+      const bank = ABANK.forTopic(t.id), how = tqSource();
+      // ⚡ tq-mix: mixed = bank + practice in one pool; bank first = the bank when it has ≥ 5, else practice; practice = practice only
+      const pool = how === 'practice' ? prac : how === 'bank' ? (bank.length >= TQ.n ? bank : prac) : Array.from(new Set(bank.concat(prac)));
       const ex = (State.assessments || []).find(a => a.autoTopic === t.id && a.status !== 'archived') || null;
-      return { t, num: i + 1, pool, ex, ok: pool.length >= TQ.n, src: pool === bank ? 'bank' : 'practice', change: !!ex && !(pool.length === (ex.questionIds || []).length && pool.every(id => (ex.questionIds || []).includes(id))) };
+      return { t, num: i + 1, pool, ex, ok: pool.length >= TQ.n, src: pool === bank ? 'bank' : pool === prac || !bank.length ? 'practice' : 'mix', nb: pool.filter(id => bank.includes(id)).length, np: pool.filter(id => prac.includes(id)).length, change: !!ex && !(pool.length === (ex.questionIds || []).length && pool.every(id => (ex.questionIds || []).includes(id))) };
     }) };
   },
   async topicQuizzesDialog() {
@@ -14700,11 +14823,17 @@ const AssessUI = {
     if (first) { const r = await Backend.authedPost({ action: 'aeCopyTargets', assessmentId: first.ex.id }, { timeout: 60000 }); if (r && r.ok) targets = r.targets; }
     const upd = el('input', { type: 'checkbox' });
     const cp = el('input', { type: 'checkbox', checked: true });
-    const rows = plan.topics.map(x => el('tr', null, el('td', null, String(x.num)), el('td', null, x.t.title), el('td', { class: 'nowrap' }, String(x.pool.length) + (x.src === 'bank' ? ' 🔒' : '')),
-      el('td', { class: 'small' }, !x.ok ? el('span', { style: 'color:var(--bad)' }, '⏭ skipped — fewer than ' + TQ.n + ' questions') : x.ex ? '• exists (“' + x.ex.title + '”)' + (x.change ? ' — Refresh gives it these ' + (x.src === 'bank' ? '🔒 bank' : '') + ' questions' : '') : el('b', { style: 'color:var(--ok)' }, '✓ new quiz'))));
+    const rows = plan.topics.map(x => el('tr', null, el('td', null, String(x.num)), el('td', null, x.t.title), el('td', { class: 'nowrap' }, String(x.pool.length) + (x.src === 'bank' ? ' 🔒' : x.src === 'mix' ? ' (' + x.nb + ' 🔒 + ' + x.np + ')' : '')),
+      el('td', { class: 'small' }, !x.ok ? el('span', { style: 'color:var(--bad)' }, '⏭ skipped — fewer than ' + TQ.n + ' questions') : x.ex ? '• exists (“' + x.ex.title + '”)' + (x.change ? ' — Refresh gives it these ' + (x.src === 'bank' ? '🔒 bank' : x.src === 'mix' ? 'mixed' : '') + ' questions' : '') : el('b', { style: 'color:var(--ok)' }, '✓ new quiz'))));
     const nNew = plan.topics.filter(x => x.ok && !x.ex).length, nEx = plan.topics.filter(x => x.ok && x.ex).length;
+    const how = tqSource();
+    const srcSel = el('select', { 'data-a': 'tq-source', onchange: (e) => { Store.set('tq_source_v1', e.target.value); const m = e.target.closest('.modal'); const x = m && m.querySelector('.modal-head .icon-btn'); if (x) x.click(); this.topicQuizzesDialog(); } },
+      [['mix', '🔒 Assessment bank + practice questions (mixed)'], ['bank', '🔒 Assessment bank first (only the bank when a topic has ≥ ' + TQ.n + ')'], ['practice', 'Practice questions only']].map(([v, l]) => el('option', { value: v, selected: v === how }, l)));
     const body = el('div', { class: 'tq' },
-      el('p', { style: 'margin-top:0' }, 'One quiz per topic, built from that topic’s 🔒 assessment-bank questions when it has at least ' + TQ.n + ' (never shown in Practice; ' + ABANK.items.length + ' in the bank), otherwise from its practice questions: each student gets ', el('b', null, TQ.n + ' random questions'), ' (in random order) — ', el('b', null, TQ.min + ' minutes'), ', ', el('b', null, '1 attempt'), ', score and correct answers shown after submitting, ', el('b', null, 'a random password'), ' for each quiz. Published and assigned to everyone; students start a quiz only with its password.'),
+      el('label', { class: 'f', style: 'display:block;margin:0 0 .6rem' }, el('b', null, 'Questions from: '), srcSel),
+      el('p', { style: 'margin-top:0' }, how === 'mix' ? 'One quiz per topic, built from ALL that topic’s questions — its 🔒 assessment-bank questions (never shown in Practice; ' + ABANK.items.length + ' in the bank) together with its practice questions: each student gets '
+        : how === 'practice' ? 'One quiz per topic, built from its practice questions: each student gets '
+        : 'One quiz per topic, built from that topic’s 🔒 assessment-bank questions when it has at least ' + TQ.n + ' (never shown in Practice; ' + ABANK.items.length + ' in the bank), otherwise from its practice questions: each student gets ', el('b', null, TQ.n + ' random questions'), ' (in random order) — ', el('b', null, TQ.min + ' minutes'), ', ', el('b', null, '1 attempt'), ', score and correct answers shown after submitting, ', el('b', null, 'a random password'), ' for each quiz. Published and assigned to everyone; students start a quiz only with its password.'),
       el('div', { class: 'table-scroll', style: 'max-height:18rem' }, el('table', { class: 'data-table' }, el('thead', null, el('tr', null, ['#', 'Topic', 'Questions', ''].map(h => el('th', null, h)))), el('tbody', null, rows))),
       el('div', { class: 'cg-opts' },
         el('label', { class: 'cg-opt' }, cp, ' Also copy them to all my other groups with this module', el('small', { class: 'muted' }, ' (each group: its own random passwords and results; a group where students already started a quiz keeps it)')),
