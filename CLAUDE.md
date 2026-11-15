@@ -18,5 +18,8 @@ in the platform repository: `third-year-med/Interactive-pathology-platform` → 
 - Source of truth for conflicting facts: Robbins Basic Pathology 10th ed., Chapter 7 (user, 2026-10-23).
 - The Robbins picture-import file (`neo-picture-import`, keys `gen-robbins-01…59`) is delivered to the user directly and is
   never committed (textbook figures).
+- 🎓 Viva Examination (2026-11-15, patch `viva`): the bank `genetics-viva-bank.json` (77 questions `viva_gen_tNN_NN`, 5 marks each, ≥ 5 per topic,
+  11 picture questions) is delivered to the user and imported in ✏️ Edit master draft → 🎓 Viva → ⬆ Import viva bank — never committed.
+- Re-activated 2026-11-15 (user): brought up to date with every platform patch; it is an active module again.
 - Test changes on the real page with the platform repo's e2e test "Genetics and Pediatric Diseases module (genetics)"
   (`GEN_CONTENT_KEY` in the environment) and `node test/module-smoke/smoke.js` before pushing.
