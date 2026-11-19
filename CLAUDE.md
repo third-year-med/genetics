@@ -1,6 +1,7 @@
 # CLAUDE.md — a module of the Interactive Pathology Teaching Platform
 
-This repository is one module (a single `index.html`): **Genetics and Pediatric Diseases** (module key `genetics`, storage
+This repository is one module (a single `index.html`): **Genetic Diseases** (renamed 2026-11-19 from "Genetics and Pediatric Diseases";
+module key `genetics`, storage
 prefix `gen_`, Chapter 5 on the front page, after Neoplasia). Built 2026-10-23 from scratch, condensed (high-yield) from the
 start (HANDBOOK §4.2), with the app code of `neoplasia`. The title never mentions "Condensed" (or similar).
 
@@ -21,5 +22,5 @@ in the platform repository: `third-year-med/Interactive-pathology-platform` → 
 - 🎓 Viva Examination (2026-11-15, patch `viva`): the bank `genetics-viva-bank.json` (77 questions `viva_gen_tNN_NN`, 5 marks each, ≥ 5 per topic,
   11 picture questions) is delivered to the user and imported in ✏️ Edit master draft → 🎓 Viva → ⬆ Import viva bank — never committed.
 - Re-activated 2026-11-15 (user): brought up to date with every platform patch; it is an active module again.
-- Test changes on the real page with the platform repo's e2e test "Genetics and Pediatric Diseases module (genetics)"
+- Test changes on the real page with the platform repo's e2e test "Genetic Diseases module (genetics)"
   (`GEN_CONTENT_KEY` in the environment) and `node test/module-smoke/smoke.js` before pushing.
